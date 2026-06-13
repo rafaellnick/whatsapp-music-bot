@@ -65,7 +65,7 @@ This project was developed following this technologies:
 https://user-images.githubusercontent.com/120257933/233465324-bfb1df96-51c4-4a02-acdf-25bdb5078e28.mp4
 
 
-To clone this application you will need [Git](https://git-scm.com) + [Node.js v18][nodejs] or higher installed in your computer. Run in terminal:
+To clone this application you will need [Git](https://git-scm.com) + [Node.js v20][nodejs] installed in your computer. On Linux servers, prefer installing Node with `nvm` instead of the distro `apt` packages.
 
 ```bash
 # Clone this repo
@@ -73,6 +73,10 @@ $ git clone https://github.com/mlg404/whatsapp-music-bot.git whatsapp-music-bot
 
 # Access this repo
 $ cd whatsapp-music-bot
+
+# Use the expected Node.js version
+$ nvm install
+$ nvm use
 
 # Install dependencies with npm
 $ npm ci

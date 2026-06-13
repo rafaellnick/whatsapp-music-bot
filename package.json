@@ -4,6 +4,10 @@
   "version": "3.1.0",
   "main": "dist/main.js",
   "license": "MIT",
+  "engines": {
+    "node": "20.x",
+    "npm": ">=10"
+  },
   "author": {
     "email": "eyervictor@gmail.com",
     "name": "Victor Eyer",
