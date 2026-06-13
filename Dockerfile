@@ -16,19 +16,29 @@ FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
     XDG_CONFIG_HOME=/tmp/.chromium \
     XDG_CACHE_HOME=/tmp/.chromium
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
-    chromium \
+    gnupg \
+    wget \
+  && wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
+    | gpg --dearmor > /usr/share/keyrings/google-linux-signing-keyring.gpg \
+  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
+    > /etc/apt/sources.list.d/google-chrome.list \
+  && apt-get update \
+  && apt-get install -y --no-install-recommends \
     dbus \
     dbus-x11 \
     ffmpeg \
     fonts-liberation \
+    google-chrome-stable \
   && rm -rf /var/lib/apt/lists/*
+
+RUN google-chrome-stable --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/tmp/chrome-smoke-test.html
 
 WORKDIR /app
 

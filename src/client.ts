@@ -7,7 +7,7 @@ import { LANGUAGE } from './config';
 const executablePath = process.env.PUPPETEER_EXECUTABLE_PATH
   || (process.platform === 'win32'
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
-    : '/usr/bin/chromium');
+    : '/usr/bin/google-chrome-stable');
 
 const client = new Client({
   puppeteer: {
