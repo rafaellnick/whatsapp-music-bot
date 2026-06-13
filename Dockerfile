@@ -16,7 +16,6 @@ FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
     XDG_CONFIG_HOME=/tmp/.chromium \
     XDG_CACHE_HOME=/tmp/.chromium
 
