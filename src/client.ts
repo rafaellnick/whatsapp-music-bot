@@ -1,6 +1,7 @@
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync, rmSync, statSync } from 'fs';
+import { join } from 'path';
 
 import text from './language';
 import { LANGUAGE } from './config';
@@ -21,6 +22,30 @@ const getExecutablePath = (): string | undefined => {
 };
 
 const executablePath = getExecutablePath();
+
+const removeStaleChromiumLocks = (root: string): void => {
+  if (!existsSync(root)) return;
+
+  for (const entry of readdirSync(root)) {
+    const fullPath = join(root, entry);
+
+    try {
+      if (entry.startsWith('Singleton')) {
+        console.log(`Removing stale Chromium profile lock: ${fullPath}`);
+        rmSync(fullPath, { force: true });
+        continue;
+      }
+
+      if (statSync(fullPath).isDirectory()) {
+        removeStaleChromiumLocks(fullPath);
+      }
+    } catch (error) {
+      console.log(`Could not inspect Chromium profile path: ${fullPath}`, error);
+    }
+  }
+};
+
+['.wwebjs_auth', '.wwebjs_cache', '/tmp/.chromium'].forEach(removeStaleChromiumLocks);
 
 const client = new Client({
   puppeteer: {

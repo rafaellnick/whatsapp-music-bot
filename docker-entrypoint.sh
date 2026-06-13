@@ -30,7 +30,7 @@ cleanup_chromium_profile_locks() {
   do
     if [ -d "$profile_root" ]; then
       find "$profile_root" \
-        \( -name SingletonLock -o -name SingletonSocket -o -name SingletonCookie \) \
+        -name 'Singleton*' \
         -exec sh -c 'for lock do echo "Removing stale Chromium profile lock: $lock"; rm -f "$lock"; done' sh {} + \
         2>/dev/null || true
     fi
