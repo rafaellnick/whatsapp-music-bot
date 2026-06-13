@@ -25,7 +25,20 @@ find_browser() {
   return 1
 }
 
+cleanup_chromium_profile_locks() {
+  for profile_root in /app/.wwebjs_auth /app/.wwebjs_cache /tmp/.chromium
+  do
+    if [ -d "$profile_root" ]; then
+      find "$profile_root" \
+        \( -name SingletonLock -o -name SingletonSocket -o -name SingletonCookie \) \
+        -exec sh -c 'for lock do echo "Removing stale Chromium profile lock: $lock"; rm -f "$lock"; done' sh {} + \
+        2>/dev/null || true
+    fi
+  done
+}
+
 mkdir -p /run/dbus /var/lib/dbus /tmp/.chromium
+cleanup_chromium_profile_locks
 
 dbus-uuidgen --ensure=/etc/machine-id
 dbus-uuidgen --ensure=/var/lib/dbus/machine-id
