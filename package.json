@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts",
+    "prestart": "npm run build",
     "start": "node dist/main.js",
     "start:ts": "ts-node --transpile-only src/main.ts"
   },

@@ -77,10 +77,7 @@ $ cd whatsapp-music-bot
 # Install dependencies with npm
 $ npm ci
 
-# Build the TypeScript files
-$ npm run build
-
-# Run the bot
+# Build and run the bot
 $ npm start
 ```
 
