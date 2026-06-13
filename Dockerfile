@@ -36,12 +36,13 @@ RUN npm ci --omit=dev --no-audit --no-fund \
   && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
+COPY docker-entrypoint.sh ./docker-entrypoint.sh
 
 RUN mkdir -p downloads .wwebjs_auth .wwebjs_cache /tmp/.chromium \
+  && chmod +x docker-entrypoint.sh \
   && chown -R node:node /app /tmp/.chromium
-
-USER node
 
 VOLUME ["/app/downloads", "/app/.wwebjs_auth", "/app/.wwebjs_cache"]
 
-CMD ["dbus-run-session", "--", "node", "dist/main.js"]
+ENTRYPOINT ["./docker-entrypoint.sh"]
+CMD ["node", "dist/main.js"]
