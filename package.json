@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts",
+    "install:linux-deps": "sh scripts/install-linux-deps.sh",
     "prestart": "npm run build",
     "start": "node dist/main.js",
     "start:ts": "ts-node --transpile-only src/main.ts"

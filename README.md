@@ -78,6 +78,9 @@ $ cd whatsapp-music-bot
 $ nvm install
 $ nvm use
 
+# Install Chromium native dependencies on Debian/Ubuntu servers
+$ npm run install:linux-deps
+
 # Install dependencies with npm
 $ npm ci
 
