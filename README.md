@@ -97,6 +97,13 @@ $ npm run dev
 $ npx ts-node --transpile-only src/main.ts
 ```
 
+If the bot does not print a QR code or never reaches `Conectado com sucesso!`, reset the saved WhatsApp session and start again:
+
+```bash
+$ npm run reset:auth
+$ npm start
+```
+
 <br />
 See available langs in `src/language.ts`. Configure your language in `config.ts` file:
 
