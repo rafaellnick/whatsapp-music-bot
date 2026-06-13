@@ -5,10 +5,8 @@ ENV PUPPETEER_SKIP_DOWNLOAD=true \
 
 WORKDIR /app
 
-RUN npm install -g yarn@1.22.22
-
-COPY package.json yarn.lock tsconfig.json ./
-RUN yarn install --frozen-lockfile
+COPY package*.json tsconfig.json ./
+RUN npm ci --no-audit --no-fund
 
 COPY src ./src
 RUN npx tsc -p tsconfig.json
@@ -30,11 +28,9 @@ RUN apt-get update \
 
 WORKDIR /app
 
-RUN npm install -g yarn@1.22.22
-
-COPY package.json yarn.lock ./
-RUN yarn install --frozen-lockfile --production=true \
-  && yarn cache clean
+COPY package*.json ./
+RUN npm ci --omit=dev --no-audit --no-fund \
+  && npm cache clean --force
 
 COPY --from=build /app/dist ./dist
 
