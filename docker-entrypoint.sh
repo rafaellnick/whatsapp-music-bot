@@ -1,17 +1,23 @@
 #!/bin/sh
 set -eu
 
-mkdir -p /run/dbus /tmp/.chromium
+mkdir -p /run/dbus /var/lib/dbus /tmp/.chromium
+
+dbus-uuidgen --ensure=/etc/machine-id
+dbus-uuidgen --ensure=/var/lib/dbus/machine-id
 
 if [ ! -S /run/dbus/system_bus_socket ]; then
-  dbus-daemon --system --fork --nopidfile || true
+  dbus-daemon --system --fork --nopidfile
 fi
 
-session_bus_address="$(dbus-daemon --session --fork --print-address=1 --print-pid=1 | head -n 1 || true)"
-if [ -n "$session_bus_address" ]; then
-  export DBUS_SESSION_BUS_ADDRESS="$session_bus_address"
-else
-  unset DBUS_SESSION_BUS_ADDRESS
+if command -v dbus-launch >/dev/null 2>&1; then
+  eval "$(dbus-launch --sh-syntax)"
+  export DBUS_SESSION_BUS_ADDRESS
+  export DBUS_SESSION_BUS_PID
+fi
+
+if [ -S /run/dbus/system_bus_socket ]; then
+  echo "DBus system bus ready at /run/dbus/system_bus_socket"
 fi
 
 exec "$@"

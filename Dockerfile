@@ -25,6 +25,7 @@ RUN apt-get update \
     ca-certificates \
     chromium \
     dbus \
+    dbus-x11 \
     ffmpeg \
     fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
