@@ -1,0 +1,20 @@
+services:
+  whatsapp-music-bot:
+    build:
+      context: .
+    container_name: whatsapp-music-bot
+    restart: unless-stopped
+    init: true
+    shm_size: "1gb"
+    environment:
+      NODE_ENV: production
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+    volumes:
+      - whatsapp_bot_auth:/app/.wwebjs_auth
+      - whatsapp_bot_cache:/app/.wwebjs_cache
+      - whatsapp_bot_downloads:/app/downloads
+
+volumes:
+  whatsapp_bot_auth:
+  whatsapp_bot_cache:
+  whatsapp_bot_downloads:
