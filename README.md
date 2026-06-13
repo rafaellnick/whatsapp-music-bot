@@ -84,7 +84,10 @@ $ npm run install:linux-deps
 # Install dependencies with npm
 $ npm ci
 
-# Build and run the bot
+# Build the project when changing source files
+$ npm run build
+
+# Run the bot
 $ npm start
 ```
 
