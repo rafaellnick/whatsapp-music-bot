@@ -22,23 +22,15 @@ ENV NODE_ENV=production \
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
-    gnupg \
-    wget \
-  && wget -qO- https://dl.google.com/linux/linux_signing_key.pub \
-    | gpg --dearmor > /usr/share/keyrings/google-linux-signing-keyring.gpg \
-  && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-linux-signing-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" \
-    > /etc/apt/sources.list.d/google-chrome.list \
-  && apt-get update \
-  && apt-get install -y --no-install-recommends \
+    chromium \
     dbus \
     dbus-x11 \
     ffmpeg \
     fonts-liberation \
-    google-chrome-stable \
     gosu \
   && rm -rf /var/lib/apt/lists/*
 
-RUN google-chrome-stable --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/tmp/chrome-smoke-test.html
+RUN chromium --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/tmp/chrome-smoke-test.html
 
 WORKDIR /app
 
