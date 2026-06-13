@@ -16,12 +16,15 @@ FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    XDG_CONFIG_HOME=/tmp/.chromium \
+    XDG_CACHE_HOME=/tmp/.chromium
 
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     ca-certificates \
     chromium \
+    dbus \
     ffmpeg \
     fonts-liberation \
   && rm -rf /var/lib/apt/lists/*
@@ -34,11 +37,11 @@ RUN npm ci --omit=dev --no-audit --no-fund \
 
 COPY --from=build /app/dist ./dist
 
-RUN mkdir -p downloads .wwebjs_auth .wwebjs_cache \
-  && chown -R node:node /app
+RUN mkdir -p downloads .wwebjs_auth .wwebjs_cache /tmp/.chromium \
+  && chown -R node:node /app /tmp/.chromium
 
 USER node
 
 VOLUME ["/app/downloads", "/app/.wwebjs_auth", "/app/.wwebjs_cache"]
 
-CMD ["node", "dist/main.js"]
+CMD ["dbus-run-session", "--", "node", "dist/main.js"]

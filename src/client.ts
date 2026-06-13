@@ -13,7 +13,19 @@ const client = new Client({
   puppeteer: {
     executablePath,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-sync',
+      '--disable-default-apps',
+      '--no-first-run',
+      '--no-zygote',
+      '--mute-audio',
+    ],
   },
   authStrategy: new LocalAuth(),
 });
