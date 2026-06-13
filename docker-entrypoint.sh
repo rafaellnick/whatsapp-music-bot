@@ -8,7 +8,8 @@ find_browser() {
     /usr/bin/google-chrome-stable \
     /usr/bin/google-chrome \
     /usr/bin/chromium \
-    /usr/bin/chromium-browser
+    /usr/bin/chromium-browser \
+    /opt/google/chrome/chrome
   do
     if [ -x "$browser" ]; then
       printf '%s\n' "$browser"
@@ -20,6 +21,14 @@ find_browser() {
   do
     if command -v "$browser_name" >/dev/null 2>&1; then
       command -v "$browser_name"
+      return 0
+    fi
+  done
+
+  for browser in /home/pptruser/.cache/puppeteer/chrome/*/chrome-linux*/chrome /root/.cache/puppeteer/chrome/*/chrome-linux*/chrome
+  do
+    if [ -x "$browser" ]; then
+      printf '%s\n' "$browser"
       return 0
     fi
   done
@@ -40,13 +49,17 @@ cleanup_chromium_profile_locks() {
 }
 
 mkdir -p /run/dbus /var/lib/dbus /tmp/.chromium /app/downloads /app/.wwebjs_auth /app/.wwebjs_cache
-chown -R node:node /tmp/.chromium /app/downloads /app/.wwebjs_auth /app/.wwebjs_cache
+if id pptruser >/dev/null 2>&1; then
+  chown -R pptruser:pptruser /tmp/.chromium /app/downloads /app/.wwebjs_auth /app/.wwebjs_cache
+fi
 cleanup_chromium_profile_locks
 
-dbus-uuidgen --ensure=/etc/machine-id
-dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+if command -v dbus-uuidgen >/dev/null 2>&1; then
+  dbus-uuidgen --ensure=/etc/machine-id
+  dbus-uuidgen --ensure=/var/lib/dbus/machine-id
+fi
 
-if [ ! -S /run/dbus/system_bus_socket ]; then
+if command -v dbus-daemon >/dev/null 2>&1 && [ ! -S /run/dbus/system_bus_socket ]; then
   dbus-daemon --system --fork --nopidfile
 fi
 
@@ -80,8 +93,8 @@ fi
 echo "Using browser executable: $PUPPETEER_EXECUTABLE_PATH"
 "$PUPPETEER_EXECUTABLE_PATH" --version || true
 
-if [ "$(id -u)" = "0" ]; then
-  exec gosu node "$@"
+if [ "$(id -u)" = "0" ] && command -v gosu >/dev/null 2>&1 && id pptruser >/dev/null 2>&1; then
+  exec gosu pptruser "$@"
 fi
 
 exec "$@"

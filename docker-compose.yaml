@@ -5,6 +5,8 @@ services:
     container_name: whatsapp-music-bot
     restart: unless-stopped
     init: true
+    cap_add:
+      - SYS_ADMIN
     shm_size: "1gb"
     environment:
       NODE_ENV: production
