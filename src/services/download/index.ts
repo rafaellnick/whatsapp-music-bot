@@ -31,6 +31,10 @@ export default class Downloader extends BaseDownload {
   }
 
   protected getCachedMusics(): string[] {
+    if (!fs.existsSync(`downloads`)) {
+      fs.mkdirSync(`downloads`, { recursive: true });
+    }
+
     return fs.readdirSync(`downloads`);
   }
 }

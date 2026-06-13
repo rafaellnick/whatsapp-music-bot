@@ -65,7 +65,7 @@ This project was developed following this technologies:
 https://user-images.githubusercontent.com/120257933/233465324-bfb1df96-51c4-4a02-acdf-25bdb5078e28.mp4
 
 
-To clone this application you will need [Git](https://git-scm.com) + [Node.js v16][nodejs] or higher + [Yarn v1.22.4][yarn] or higher installed in your computer. Run in terminal:
+To clone this application you will need [Git](https://git-scm.com) + [Node.js v18][nodejs] or higher installed in your computer. Run in terminal:
 
 ```bash
 # Clone this repo
@@ -74,11 +74,23 @@ $ git clone https://github.com/mlg404/whatsapp-music-bot.git whatsapp-music-bot
 # Access this repo
 $ cd whatsapp-music-bot
 
-# Install dependencies with yarn
-$ yarn install
+# Install dependencies with npm
+$ npm ci
 
-# Run the application with yarn (or npm run dev)
-$ yarn start
+# Build the TypeScript files
+$ npm run build
+
+# Run the bot
+$ npm start
+```
+
+For development, you can run it directly from TypeScript:
+
+```bash
+$ npm run dev
+
+# or
+$ npx ts-node --transpile-only src/main.ts
 ```
 
 <br />
@@ -132,5 +144,4 @@ This project is under MIT license. See [LICENSE](https://github.com/mlg404/whats
 Made with 💙 by Victor Eyer :wave: [Get in touch!](https://www.linkedin.com/in/victoreyer/)
 
 [nodejs]: https://nodejs.org/
-[yarn]: https://classic.yarnpkg.com/lang/en/
 [vc]: https://code.visualstudio.com/

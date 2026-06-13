@@ -1,6 +1,9 @@
 node_modules/*
+dist/*
 downloads/*
 !downloads/.your_mp3_files_will_be_saved_here
 .env
 yarn-error.log
 WWebJS
+.wwebjs_auth
+.wwebjs_cache

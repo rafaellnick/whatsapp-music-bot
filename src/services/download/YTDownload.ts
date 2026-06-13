@@ -1,10 +1,16 @@
 import ytdl from '@distube/ytdl-core';
+import { execFile } from 'child_process';
 import fs from 'fs';
-import FFMPEG from 'ffmpeg';
+import { promisify } from 'util';
+import ffmpegPath from 'ffmpeg-static';
 import { DOWNLOAD_PATH } from '../../config';
+
+const execFileAsync = promisify(execFile);
 
 export default class YTDownload {
   public async download(videoId: string): Promise<string> {
+    fs.mkdirSync(DOWNLOAD_PATH, { recursive: true });
+
     const videoPath = `${DOWNLOAD_PATH}/${videoId}.mp4`;
     const audio = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {quality: 18 }).pipe(fs.createWriteStream(videoPath));
 
@@ -22,11 +28,26 @@ export default class YTDownload {
 
   private async extractMp3FromMp4(videoPath: string): Promise<string> {
     const audioPath = videoPath.split('.')[0];
-    const video = await new FFMPEG(videoPath);
-    const result = await video.fnExtractSoundToMP3(`${audioPath}.mp3`);
+    const outputPath = `${audioPath}.mp3`;
 
-    fs.unlinkSync(`${audioPath}.mp4`);
+    if (!ffmpegPath) {
+      throw new Error('ffmpeg-static binary was not found');
+    }
 
-    return result;
+    await execFileAsync(ffmpegPath, [
+      '-y',
+      '-i',
+      videoPath,
+      '-vn',
+      '-codec:a',
+      'libmp3lame',
+      '-q:a',
+      '2',
+      outputPath,
+    ]);
+
+    fs.unlinkSync(videoPath);
+
+    return outputPath;
   }
 }
