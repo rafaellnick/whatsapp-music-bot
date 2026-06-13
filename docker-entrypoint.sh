@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 
+echo "Starting whatsapp-music-bot container entrypoint"
+
 find_browser() {
   for browser in \
     /usr/bin/google-chrome-stable \
@@ -37,7 +39,8 @@ cleanup_chromium_profile_locks() {
   done
 }
 
-mkdir -p /run/dbus /var/lib/dbus /tmp/.chromium
+mkdir -p /run/dbus /var/lib/dbus /tmp/.chromium /app/downloads /app/.wwebjs_auth /app/.wwebjs_cache
+chown -R node:node /tmp/.chromium /app/downloads /app/.wwebjs_auth /app/.wwebjs_cache
 cleanup_chromium_profile_locks
 
 dbus-uuidgen --ensure=/etc/machine-id
@@ -76,5 +79,9 @@ fi
 
 echo "Using browser executable: $PUPPETEER_EXECUTABLE_PATH"
 "$PUPPETEER_EXECUTABLE_PATH" --version || true
+
+if [ "$(id -u)" = "0" ]; then
+  exec gosu node "$@"
+fi
 
 exec "$@"

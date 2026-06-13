@@ -35,6 +35,7 @@ RUN apt-get update \
     ffmpeg \
     fonts-liberation \
     google-chrome-stable \
+    gosu \
   && rm -rf /var/lib/apt/lists/*
 
 RUN google-chrome-stable --headless=new --no-sandbox --disable-gpu --disable-dev-shm-usage --dump-dom about:blank >/tmp/chrome-smoke-test.html
