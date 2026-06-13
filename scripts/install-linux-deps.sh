@@ -9,13 +9,13 @@ fi
 install_one_of() {
   for package_name in "$@"
   do
-    if apt-cache show "$package_name" >/dev/null 2>&1; then
-      sudo apt-get install -y --no-install-recommends "$package_name"
+    echo "Trying to install $package_name"
+    if sudo apt-get install -y --no-install-recommends "$package_name"; then
       return 0
     fi
   done
 
-  echo "None of these packages are available: $*" >&2
+  echo "Could not install any of these packages: $*" >&2
   return 1
 }
 
@@ -47,15 +47,15 @@ sudo apt-get install -y --no-install-recommends \
   libxtst6 \
   xdg-utils
 
-install_one_of libasound2 libasound2t64
-install_one_of libatk-bridge2.0-0 libatk-bridge2.0-0t64
-install_one_of libatk1.0-0 libatk1.0-0t64
-install_one_of libcups2 libcups2t64
-install_one_of libdbus-1-3 libdbus-1-3t64
-install_one_of libglib2.0-0 libglib2.0-0t64
-install_one_of libgtk-3-0 libgtk-3-0t64
-install_one_of libpango-1.0-0 libpango-1.0-0t64
-install_one_of libpangocairo-1.0-0 libpangocairo-1.0-0t64
+install_one_of libasound2t64 libasound2
+install_one_of libatk-bridge2.0-0t64 libatk-bridge2.0-0
+install_one_of libatk1.0-0t64 libatk1.0-0
+install_one_of libcups2t64 libcups2
+install_one_of libdbus-1-3t64 libdbus-1-3
+install_one_of libglib2.0-0t64 libglib2.0-0
+install_one_of libgtk-3-0t64 libgtk-3-0
+install_one_of libpango-1.0-0t64 libpango-1.0-0
+install_one_of libpangocairo-1.0-0t64 libpangocairo-1.0-0
 
 sudo ldconfig
 
