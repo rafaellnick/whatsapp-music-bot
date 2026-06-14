@@ -22,14 +22,15 @@ const YTDlp_1 = require("../download/YTDlp");
 const execFileAsync = (0, util_1.promisify)(child_process_1.execFile);
 const MAX_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15) * 1024 * 1024;
 const TARGET_VIDEO_BYTES = Math.floor(MAX_VIDEO_BYTES * 0.9);
+const SOURCE_FILE_MARKER = '.source.';
 class YTDownload {
     download(videoId) {
         return __awaiter(this, void 0, void 0, function* () {
             fs_1.default.mkdirSync(config_1.DOWNLOAD_PATH, { recursive: true });
             const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
-            const sourcePath = path_1.default.join(config_1.DOWNLOAD_PATH, `${videoId}.source.mp4`);
+            const sourceTemplate = path_1.default.join(config_1.DOWNLOAD_PATH, `${videoId}${SOURCE_FILE_MARKER}%(ext)s`);
             const videoPath = path_1.default.join(config_1.DOWNLOAD_PATH, `${videoId}.mp4`);
-            fs_1.default.rmSync(sourcePath, { force: true });
+            this.removeSourceFiles(videoId);
             fs_1.default.rmSync(videoPath, { force: true });
             yield (0, YTDlp_1.runYtDlp)([
                 '--no-playlist',
@@ -38,10 +39,11 @@ class YTDownload {
                 '--format',
                 'worst[ext=mp4][height<=240][vcodec!=none][acodec!=none]/best[ext=mp4][height<=240][vcodec!=none][acodec!=none]/worst[ext=mp4][vcodec!=none][acodec!=none]/18',
                 '--output',
-                sourcePath,
+                sourceTemplate,
                 ...(0, YTDlp_1.getYtDlpRuntimeArgs)(),
                 videoUrl,
             ]);
+            const sourcePath = this.findSourceFile(videoId);
             if (!fs_1.default.existsSync(sourcePath) || fs_1.default.statSync(sourcePath).size === 0) {
                 throw new Error(`Could not download video ${videoId}`);
             }
@@ -49,8 +51,12 @@ class YTDownload {
                 fs_1.default.renameSync(sourcePath, videoPath);
                 return videoPath;
             }
-            yield this.compressForWhatsApp(sourcePath, videoPath);
-            fs_1.default.rmSync(sourcePath, { force: true });
+            try {
+                yield this.compressForWhatsApp(sourcePath, videoPath);
+            }
+            finally {
+                fs_1.default.rmSync(sourcePath, { force: true });
+            }
             if (!fs_1.default.existsSync(videoPath) || fs_1.default.statSync(videoPath).size === 0) {
                 throw new Error(`Could not compress video ${videoId}`);
             }
@@ -67,12 +73,20 @@ class YTDownload {
             const audioBitrateKbps = durationSeconds > 600 ? 32 : 48;
             const videoBitrateKbps = Math.max(64, totalBitrateKbps - audioBitrateKbps);
             console.log(`Compressing video for WhatsApp media: ${videoBitrateKbps}k video, ${audioBitrateKbps}k audio`);
-            yield execFileAsync(ffmpeg_static_1.default, [
+            yield this.runFfmpeg([
                 '-y',
                 '-i',
                 sourcePath,
+                '-map',
+                '0:v:0',
+                '-map',
+                '0:a:0?',
+                '-sn',
+                '-dn',
                 '-vf',
                 'scale=-2:240',
+                '-r',
+                '24',
                 '-c:v',
                 'libx264',
                 '-preset',
@@ -85,20 +99,55 @@ class YTDownload {
                 'yuv420p',
                 '-b:v',
                 `${videoBitrateKbps}k`,
-                '-maxrate',
-                `${videoBitrateKbps}k`,
-                '-bufsize',
-                `${videoBitrateKbps * 2}k`,
                 '-c:a',
                 'aac',
                 '-b:a',
                 `${audioBitrateKbps}k`,
+                '-ac',
+                '1',
                 '-movflags',
                 '+faststart',
                 outputPath,
-            ], {
-                maxBuffer: 20 * 1024 * 1024,
-            });
+            ]);
+            if (fs_1.default.statSync(outputPath).size > MAX_VIDEO_BYTES) {
+                console.log('Compressed video is still too large. Running a smaller fallback encode.');
+                yield this.runFfmpeg([
+                    '-y',
+                    '-i',
+                    sourcePath,
+                    '-map',
+                    '0:v:0',
+                    '-map',
+                    '0:a:0?',
+                    '-sn',
+                    '-dn',
+                    '-vf',
+                    'scale=-2:180',
+                    '-r',
+                    '18',
+                    '-c:v',
+                    'libx264',
+                    '-preset',
+                    'veryfast',
+                    '-profile:v',
+                    'baseline',
+                    '-level',
+                    '3.0',
+                    '-pix_fmt',
+                    'yuv420p',
+                    '-b:v',
+                    '96k',
+                    '-c:a',
+                    'aac',
+                    '-b:a',
+                    '24k',
+                    '-ac',
+                    '1',
+                    '-movflags',
+                    '+faststart',
+                    outputPath,
+                ]);
+            }
         });
     }
     getDurationSeconds(videoPath) {
@@ -120,6 +169,44 @@ class YTDownload {
                 }
             }
             return 300;
+        });
+    }
+    findSourceFile(videoId) {
+        const sourceFile = fs_1.default
+            .readdirSync(config_1.DOWNLOAD_PATH)
+            .find(file => file.startsWith(`${videoId}${SOURCE_FILE_MARKER}`));
+        if (!sourceFile) {
+            throw new Error(`Could not find downloaded source video for ${videoId}`);
+        }
+        return path_1.default.join(config_1.DOWNLOAD_PATH, sourceFile);
+    }
+    removeSourceFiles(videoId) {
+        if (!fs_1.default.existsSync(config_1.DOWNLOAD_PATH))
+            return;
+        for (const file of fs_1.default.readdirSync(config_1.DOWNLOAD_PATH)) {
+            if (file.startsWith(`${videoId}${SOURCE_FILE_MARKER}`)) {
+                fs_1.default.rmSync(path_1.default.join(config_1.DOWNLOAD_PATH, file), { force: true });
+            }
+        }
+    }
+    runFfmpeg(args) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!ffmpeg_static_1.default) {
+                throw new Error('ffmpeg-static binary was not found');
+            }
+            try {
+                yield execFileAsync(ffmpeg_static_1.default, args, {
+                    maxBuffer: 50 * 1024 * 1024,
+                });
+            }
+            catch (error) {
+                const failure = error;
+                const details = [failure.stderr, failure.stdout, failure.message]
+                    .filter(Boolean)
+                    .join('\n')
+                    .trim();
+                throw new Error(`ffmpeg failed while compressing video:\n${details}`);
+            }
         });
     }
 }
