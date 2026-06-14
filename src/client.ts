@@ -1,7 +1,7 @@
 import { Client, LocalAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { existsSync, readdirSync, rmSync, statSync } from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
 import text from './language';
 import { LANGUAGE } from './config';
@@ -28,6 +28,9 @@ console.log(
     : 'Using Puppeteer bundled browser',
 );
 
+const authPath = resolve(process.env.WWEBJS_AUTH_PATH || '.wwebjs_auth');
+const cachePath = resolve(process.env.WWEBJS_CACHE_PATH || '.wwebjs_cache');
+
 const removeStaleChromiumLocks = (root: string): void => {
   if (!existsSync(root)) return;
 
@@ -50,60 +53,78 @@ const removeStaleChromiumLocks = (root: string): void => {
   }
 };
 
-['.wwebjs_auth', '.wwebjs_cache', '/tmp/.chromium'].forEach(removeStaleChromiumLocks);
+export const createClient = (): Client => {
+  removeStaleChromiumLocks(authPath);
 
-const client = new Client({
-  puppeteer: {
-    ...(executablePath ? { executablePath } : {}),
-    headless: true,
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu',
-      '--disable-extensions',
-      '--disable-background-networking',
-      '--disable-sync',
-      '--disable-default-apps',
-      '--no-first-run',
-      '--no-zygote',
-      '--mute-audio',
-    ],
-  },
-  authStrategy: new LocalAuth(),
-});
-client.on('qr', qr => {
-  console.log('QR code received. Scan it with WhatsApp > Linked devices.');
-  qrcode.generate(qr, { small: true });
-});
+  const client = new Client({
+    authTimeoutMs: 120000,
+    qrMaxRetries: 5,
+    takeoverOnConflict: true,
+    takeoverTimeoutMs: 0,
+    webVersionCache: {
+      type: 'local',
+      path: cachePath,
+      strict: false,
+    },
+    puppeteer: {
+      ...(executablePath ? { executablePath } : {}),
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-extensions',
+        '--disable-background-networking',
+        '--disable-sync',
+        '--disable-default-apps',
+        '--disable-features=Translate,BackForwardCache,AcceptCHFrame',
+        '--no-first-run',
+        '--no-zygote',
+        '--mute-audio',
+      ],
+    },
+    authStrategy: new LocalAuth({
+      dataPath: authPath,
+      rmMaxRetries: 10,
+    }),
+  });
 
-client.on('authenticated', () => {
-  console.log('WhatsApp authentication successful.');
-});
+  client.on('qr', qr => {
+    console.log('QR code received. Scan it with WhatsApp > Linked devices.');
+    qrcode.generate(qr, { small: true });
+  });
 
-client.on('auth_failure', message => {
-  console.error('WhatsApp authentication failed:', message);
-  console.error('Try running: npm run reset:auth');
-});
+  client.on('authenticated', () => {
+    console.log('WhatsApp authentication successful.');
+  });
 
-client.on('loading_screen', (percent, message) => {
-  console.log(`WhatsApp loading: ${percent}% - ${message}`);
-});
+  client.on('auth_failure', message => {
+    console.error('WhatsApp authentication failed:', message);
+    console.error('Try running: npm run reset:auth');
+  });
 
-client.on('change_state', state => {
-  console.log(`WhatsApp state changed: ${state}`);
-});
+  client.on('loading_screen', (percent, message) => {
+    console.log(`WhatsApp loading: ${percent}% - ${message}`);
+  });
 
-client.on('disconnected', reason => {
-  console.error('WhatsApp disconnected:', reason);
-});
+  client.on('change_state', state => {
+    console.log(`WhatsApp state changed: ${state}`);
+  });
 
-client.on('remote_session_saved', () => {
-  console.log('WhatsApp remote session saved.');
-});
+  client.on('disconnected', reason => {
+    console.error('WhatsApp disconnected:', reason);
+  });
 
-client.on('ready', async () => {
-  console.log(text[LANGUAGE].CONNECTED);
-});
+  client.on('remote_session_saved', () => {
+    console.log('WhatsApp remote session saved.');
+  });
 
-export default client;
+  client.on('ready', async () => {
+    console.log(text[LANGUAGE].CONNECTED);
+  });
+
+  return client;
+};
+
+export default createClient;

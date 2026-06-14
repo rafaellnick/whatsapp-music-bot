@@ -7,3 +7,4 @@ yarn-error.log
 WWebJS
 .wwebjs_auth
 .wwebjs_cache
+.wwebjs_bot.lock
