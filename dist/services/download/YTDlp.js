@@ -25,6 +25,7 @@ const localYtDlpPath = path_1.default.join(projectRoot, 'bin', binaryName);
 const localDenoPath = path_1.default.join(projectRoot, 'bin', denoName);
 const timeoutMs = Number(process.env.YT_DLP_TIMEOUT_MS || 10 * 60 * 1000);
 let resolvedYtDlpPath;
+let loggedJsRuntime;
 function canRun(binaryPath) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -39,22 +40,54 @@ function canRun(binaryPath) {
         }
     });
 }
+function findOnPath(binary) {
+    const pathValue = process.env.PATH || '';
+    const extensions = process.platform === 'win32' && !path_1.default.extname(binary)
+        ? (process.env.PATHEXT || '.EXE;.CMD;.BAT;.COM').split(';')
+        : [''];
+    for (const directory of pathValue.split(path_1.default.delimiter)) {
+        if (!directory)
+            continue;
+        for (const extension of extensions) {
+            const candidate = path_1.default.join(directory, `${binary}${extension}`);
+            if (fs_1.default.existsSync(candidate)) {
+                return candidate;
+            }
+        }
+    }
+    return undefined;
+}
+function getYtDlpJsRuntime() {
+    if (process.env.YT_DLP_JS_RUNTIME) {
+        return process.env.YT_DLP_JS_RUNTIME;
+    }
+    const denoPath = process.env.DENO_PATH ||
+        (fs_1.default.existsSync(localDenoPath) ? localDenoPath : undefined) ||
+        findOnPath(denoName);
+    if (denoPath) {
+        return `deno:${denoPath}`;
+    }
+    const nodeMajorVersion = Number(process.versions.node.split('.')[0]);
+    if (nodeMajorVersion < 22) {
+        console.warn(`yt-dlp may require Deno or Node 22+ for YouTube extraction. Current Node is ${process.version}.`);
+    }
+    return `node:${process.execPath}`;
+}
+function logYtDlpJsRuntime(runtime) {
+    if (loggedJsRuntime === runtime)
+        return;
+    console.log(`Using yt-dlp JavaScript runtime: ${runtime}`);
+    loggedJsRuntime = runtime;
+}
 function getYtDlpRuntimeArgs() {
-    const args = [];
+    const jsRuntime = getYtDlpJsRuntime();
+    const args = ['--js-runtimes', jsRuntime];
+    logYtDlpJsRuntime(jsRuntime);
     if (process.env.YT_DLP_COOKIES) {
         args.push('--cookies', process.env.YT_DLP_COOKIES);
     }
     if (process.env.YT_DLP_PROXY) {
         args.push('--proxy', process.env.YT_DLP_PROXY);
-    }
-    if (process.env.YT_DLP_JS_RUNTIME) {
-        args.push('--js-runtimes', process.env.YT_DLP_JS_RUNTIME);
-    }
-    else if (process.env.DENO_PATH) {
-        args.push('--js-runtimes', `deno:${process.env.DENO_PATH}`);
-    }
-    else if (fs_1.default.existsSync(localDenoPath)) {
-        args.push('--js-runtimes', `deno:${localDenoPath}`);
     }
     return args;
 }
