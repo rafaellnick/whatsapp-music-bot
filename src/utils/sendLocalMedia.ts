@@ -3,7 +3,7 @@ import path from 'path';
 import { Message, MessageMedia } from 'whatsapp-web.js';
 
 const SEND_MEDIA_TIMEOUT_MS = Number(process.env.WHATSAPP_SEND_TIMEOUT_MS || 30000);
-const MAX_VIDEO_MEDIA_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_MEDIA_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 5), 8);
 
 const MIME_TYPES: Record<string, string> = {
   '.mp3': 'audio/mpeg',

@@ -7,7 +7,7 @@ import { DOWNLOAD_PATH } from '../../config';
 import { getYtDlpRuntimeArgs, runYtDlp } from '../download/YTDlp';
 
 const execFileAsync = promisify(execFile);
-const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 5), 8);
 const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
 const TARGET_VIDEO_BYTES = Math.floor(MAX_VIDEO_BYTES * 0.9);
 const SOURCE_FILE_MARKER = '.source.';
@@ -43,11 +43,6 @@ export default class YTDownload {
 
     if (!fs.existsSync(sourcePath) || fs.statSync(sourcePath).size === 0) {
       throw new Error(`Could not download video ${videoId}`);
-    }
-
-    if (fs.statSync(sourcePath).size <= TARGET_VIDEO_BYTES) {
-      fs.renameSync(sourcePath, videoPath);
-      return videoPath;
     }
 
     try {
@@ -96,6 +91,8 @@ export default class YTDownload {
       '24',
       '-c:v',
       'libx264',
+      '-tag:v',
+      'avc1',
       '-preset',
       'veryfast',
       '-profile:v',
@@ -106,6 +103,10 @@ export default class YTDownload {
       'yuv420p',
       '-b:v',
       `${videoBitrateKbps}k`,
+      '-maxrate',
+      `${videoBitrateKbps}k`,
+      '-bufsize',
+      `${videoBitrateKbps * 2}k`,
       '-c:a',
       'aac',
       '-b:a',
@@ -136,6 +137,8 @@ export default class YTDownload {
         '18',
         '-c:v',
         'libx264',
+        '-tag:v',
+        'avc1',
         '-preset',
         'veryfast',
         '-profile:v',
@@ -146,6 +149,10 @@ export default class YTDownload {
         'yuv420p',
         '-b:v',
         '96k',
+        '-maxrate',
+        '96k',
+        '-bufsize',
+        '192k',
         '-c:a',
         'aac',
         '-b:a',

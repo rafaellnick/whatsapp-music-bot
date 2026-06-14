@@ -4,8 +4,9 @@ import BaseDownload from './base';
 import YTDownload from './YTDownload';
 import { DOWNLOAD_PATH } from '../../config';
 
-const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 5), 8);
 const MAX_CACHED_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
+const NORMALIZED_MARKER_SUFFIX = '.normalized';
 
 export default class Downloader extends BaseDownload {
   private ytDownload: YTDownload;
@@ -27,7 +28,7 @@ export default class Downloader extends BaseDownload {
     }
 
     if (fs.existsSync(videoPath)) {
-      fs.rmSync(videoPath, { force: true });
+      this.removeVideoCache(videoPath);
       this.musics = this.musics.filter(music => music !== `${videoId}.mp4`);
     }
 
@@ -45,6 +46,7 @@ export default class Downloader extends BaseDownload {
     }
 
     this.musics = [...this.musics, `${videoId}.mp4`];
+    this.writeVideoMarker(result);
 
     return result;
   }
@@ -54,11 +56,28 @@ export default class Downloader extends BaseDownload {
   }
 
   private isVideoUsable(videoPath: string): boolean {
-    return fs.existsSync(videoPath) && fs.statSync(videoPath).size <= MAX_CACHED_VIDEO_BYTES;
+    return (
+      fs.existsSync(videoPath) &&
+      fs.existsSync(this.getVideoMarkerPath(videoPath)) &&
+      fs.statSync(videoPath).size <= MAX_CACHED_VIDEO_BYTES
+    );
   }
 
   private formatBytes(bytes: number): string {
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  private getVideoMarkerPath(videoPath: string): string {
+    return `${videoPath}${NORMALIZED_MARKER_SUFFIX}`;
+  }
+
+  private removeVideoCache(videoPath: string): void {
+    fs.rmSync(videoPath, { force: true });
+    fs.rmSync(this.getVideoMarkerPath(videoPath), { force: true });
+  }
+
+  private writeVideoMarker(videoPath: string): void {
+    fs.writeFileSync(this.getVideoMarkerPath(videoPath), 'normalized');
   }
 
   protected getCachedMusics(): string[] {

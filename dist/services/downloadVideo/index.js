@@ -17,8 +17,9 @@ const path_1 = __importDefault(require("path"));
 const base_1 = __importDefault(require("./base"));
 const YTDownload_1 = __importDefault(require("./YTDownload"));
 const config_1 = require("../../config");
-const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 5), 8);
 const MAX_CACHED_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
+const NORMALIZED_MARKER_SUFFIX = '.normalized';
 class Downloader extends base_1.default {
     constructor() {
         super();
@@ -33,7 +34,7 @@ class Downloader extends base_1.default {
                 return videoPath;
             }
             if (fs_1.default.existsSync(videoPath)) {
-                fs_1.default.rmSync(videoPath, { force: true });
+                this.removeVideoCache(videoPath);
                 this.musics = this.musics.filter(music => music !== `${videoId}.mp4`);
             }
             const result = yield this.ytDownload.download(videoId);
@@ -43,6 +44,7 @@ class Downloader extends base_1.default {
                 throw new Error(`Downloaded video is too large for WhatsApp (${this.formatBytes(resultSize)}). Try the audio command instead.`);
             }
             this.musics = [...this.musics, `${videoId}.mp4`];
+            this.writeVideoMarker(result);
             return result;
         });
     }
@@ -50,10 +52,22 @@ class Downloader extends base_1.default {
         return this.musics.includes(`${videoId}.mp4`);
     }
     isVideoUsable(videoPath) {
-        return fs_1.default.existsSync(videoPath) && fs_1.default.statSync(videoPath).size <= MAX_CACHED_VIDEO_BYTES;
+        return (fs_1.default.existsSync(videoPath) &&
+            fs_1.default.existsSync(this.getVideoMarkerPath(videoPath)) &&
+            fs_1.default.statSync(videoPath).size <= MAX_CACHED_VIDEO_BYTES);
     }
     formatBytes(bytes) {
         return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+    }
+    getVideoMarkerPath(videoPath) {
+        return `${videoPath}${NORMALIZED_MARKER_SUFFIX}`;
+    }
+    removeVideoCache(videoPath) {
+        fs_1.default.rmSync(videoPath, { force: true });
+        fs_1.default.rmSync(this.getVideoMarkerPath(videoPath), { force: true });
+    }
+    writeVideoMarker(videoPath) {
+        fs_1.default.writeFileSync(this.getVideoMarkerPath(videoPath), 'normalized');
     }
     getCachedMusics() {
         if (!fs_1.default.existsSync(config_1.DOWNLOAD_PATH)) {

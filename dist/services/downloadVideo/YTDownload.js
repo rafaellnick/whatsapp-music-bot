@@ -20,7 +20,7 @@ const ffmpeg_static_1 = __importDefault(require("ffmpeg-static"));
 const config_1 = require("../../config");
 const YTDlp_1 = require("../download/YTDlp");
 const execFileAsync = (0, util_1.promisify)(child_process_1.execFile);
-const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 5), 8);
 const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
 const TARGET_VIDEO_BYTES = Math.floor(MAX_VIDEO_BYTES * 0.9);
 const SOURCE_FILE_MARKER = '.source.';
@@ -47,10 +47,6 @@ class YTDownload {
             const sourcePath = this.findSourceFile(videoId);
             if (!fs_1.default.existsSync(sourcePath) || fs_1.default.statSync(sourcePath).size === 0) {
                 throw new Error(`Could not download video ${videoId}`);
-            }
-            if (fs_1.default.statSync(sourcePath).size <= TARGET_VIDEO_BYTES) {
-                fs_1.default.renameSync(sourcePath, videoPath);
-                return videoPath;
             }
             try {
                 yield this.compressForWhatsApp(sourcePath, videoPath);
@@ -90,6 +86,8 @@ class YTDownload {
                 '24',
                 '-c:v',
                 'libx264',
+                '-tag:v',
+                'avc1',
                 '-preset',
                 'veryfast',
                 '-profile:v',
@@ -100,6 +98,10 @@ class YTDownload {
                 'yuv420p',
                 '-b:v',
                 `${videoBitrateKbps}k`,
+                '-maxrate',
+                `${videoBitrateKbps}k`,
+                '-bufsize',
+                `${videoBitrateKbps * 2}k`,
                 '-c:a',
                 'aac',
                 '-b:a',
@@ -128,6 +130,8 @@ class YTDownload {
                     '18',
                     '-c:v',
                     'libx264',
+                    '-tag:v',
+                    'avc1',
                     '-preset',
                     'veryfast',
                     '-profile:v',
@@ -138,6 +142,10 @@ class YTDownload {
                     'yuv420p',
                     '-b:v',
                     '96k',
+                    '-maxrate',
+                    '96k',
+                    '-bufsize',
+                    '192k',
                     '-c:a',
                     'aac',
                     '-b:a',
