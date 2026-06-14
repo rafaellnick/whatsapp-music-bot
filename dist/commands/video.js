@@ -28,7 +28,7 @@ exports.default = {
             message.reply(language_1.default[config_1.LANGUAGE].DOWNLOAD_STARTED);
             const music = yield downloader.handle(videoId);
             const media = (0, createLocalMedia_1.default)(music);
-            return (0, sendLocalMedia_1.default)(message, media);
+            return (0, sendLocalMedia_1.default)(message, media, { asDocument: true });
         }
         catch (error) {
             console.log(error);

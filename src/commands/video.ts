@@ -19,7 +19,7 @@ export default {
       const music = await downloader.handle(videoId);
 
       const media = createLocalMedia(music);
-      return sendLocalMedia(message, media);
+      return sendLocalMedia(message, media, { asDocument: true });
     } catch (error) {
       console.log(error);
       return message.reply(text[LANGUAGE].ERROR);

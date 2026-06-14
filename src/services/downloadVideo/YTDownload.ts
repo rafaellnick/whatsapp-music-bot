@@ -16,7 +16,7 @@ export default class YTDownload {
       '--force-overwrites',
       '--no-part',
       '--format',
-      'worst[ext=mp4][vcodec!=none][acodec!=none]/18/best[ext=mp4][height<=360][vcodec!=none][acodec!=none]/best[ext=mp4][vcodec!=none][acodec!=none]',
+      'worst[ext=mp4][height<=240][vcodec!=none][acodec!=none]/best[ext=mp4][height<=240][vcodec!=none][acodec!=none]/worst[ext=mp4][vcodec!=none][acodec!=none]/18',
       '--output',
       videoPath,
       ...getYtDlpRuntimeArgs(),

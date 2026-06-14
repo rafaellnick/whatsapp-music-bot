@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const SEND_MEDIA_TIMEOUT_MS = Number(process.env.WHATSAPP_SEND_TIMEOUT_MS || 120000);
+const SEND_MEDIA_TIMEOUT_MS = Number(process.env.WHATSAPP_SEND_TIMEOUT_MS || 60000);
 function withTimeout(promise, timeoutMessage) {
     return __awaiter(this, void 0, void 0, function* () {
         let timeout;
@@ -24,16 +24,15 @@ function withTimeout(promise, timeoutMessage) {
         }
     });
 }
-function sendLocalMedia(message, media) {
+function sendLocalMedia(message, media, options = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         const chat = yield message.getChat();
-        console.log(`Uploading media as document: ${media.filename}`);
+        console.log(`Queueing media upload: ${media.filename} (${options.asDocument ? 'document' : 'media'})`);
         const sentMessage = yield withTimeout(chat.sendMessage(media, {
-            sendMediaAsDocument: true,
-            waitUntilMsgSent: true,
+            sendMediaAsDocument: options.asDocument,
             sendSeen: true,
         }), `WhatsApp media send timed out after ${SEND_MEDIA_TIMEOUT_MS / 1000}s`);
-        console.log(`Media sent: ${media.filename}`);
+        console.log(`Media queued: ${media.filename}`);
         return sentMessage;
     });
 }
