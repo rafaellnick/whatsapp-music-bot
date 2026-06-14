@@ -15,14 +15,39 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = __importDefault(require("./client"));
 const commands_1 = __importDefault(require("./commands"));
 const config_1 = require("./config");
-const allCommands = ["play", "help"];
-client_1.default.initialize();
+const initializationRetryDelays = [0, 3000, 8000];
+const sleep = (delay) => new Promise(resolve => setTimeout(resolve, delay));
+const initializeClient = () => __awaiter(void 0, void 0, void 0, function* () {
+    for (const [attempt, delay] of initializationRetryDelays.entries()) {
+        if (delay > 0) {
+            yield sleep(delay);
+        }
+        try {
+            yield client_1.default.initialize();
+            return;
+        }
+        catch (error) {
+            console.error(`WhatsApp initialize failed on attempt ${attempt + 1}/${initializationRetryDelays.length}:`, error);
+            try {
+                yield client_1.default.destroy();
+            }
+            catch (_a) {
+                // Browser may already be closed after a failed initialization attempt.
+            }
+        }
+    }
+    throw new Error('WhatsApp initialization failed after all retry attempts.');
+});
 client_1.default.on('message_create', (message) => __awaiter(void 0, void 0, void 0, function* () {
     if (!message.body.startsWith(config_1.PREFIX))
         return;
     const [command, ...rest] = message.body.split(' ');
     const content = rest.join(' ');
-    if (!allCommands.includes(command.substring(1)))
+    if (!commands_1.default[command])
         return;
-    commands_1.default[command].run(message, content);
+    yield commands_1.default[command].run(message, content);
 }));
+initializeClient().catch(error => {
+    console.error(error);
+    process.exit(1);
+});
