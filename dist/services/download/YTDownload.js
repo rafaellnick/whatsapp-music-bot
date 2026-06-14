@@ -23,14 +23,17 @@ class YTDownload {
     download(videoId) {
         return __awaiter(this, void 0, void 0, function* () {
             fs_1.default.mkdirSync(config_1.DOWNLOAD_PATH, { recursive: true });
-            const videoPath = `${config_1.DOWNLOAD_PATH}/${videoId}.mp4`;
-            const audio = (0, ytdl_core_1.default)(`https://www.youtube.com/watch?v=${videoId}`, { quality: 18 }).pipe(fs_1.default.createWriteStream(videoPath));
+            const videoPath = `${config_1.DOWNLOAD_PATH}/${videoId}.audio`;
+            const audio = (0, ytdl_core_1.default)(`https://www.youtube.com/watch?v=${videoId}`, {
+                filter: 'audioonly',
+                quality: 'highestaudio',
+            }).pipe(fs_1.default.createWriteStream(videoPath));
             const downloadEnd = yield new Promise(resolve => {
                 audio.on('finish', () => resolve(true));
                 audio.on('error', () => resolve(false));
             });
             if (!downloadEnd) {
-                // oh no i can't download this shit 😵️
+                throw new Error(`Could not download audio for video ${videoId}`);
             }
             return this.extractMp3FromMp4(videoPath);
         });

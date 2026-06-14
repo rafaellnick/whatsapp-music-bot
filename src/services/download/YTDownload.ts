@@ -11,8 +11,11 @@ export default class YTDownload {
   public async download(videoId: string): Promise<string> {
     fs.mkdirSync(DOWNLOAD_PATH, { recursive: true });
 
-    const videoPath = `${DOWNLOAD_PATH}/${videoId}.mp4`;
-    const audio = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {quality: 18 }).pipe(fs.createWriteStream(videoPath));
+    const videoPath = `${DOWNLOAD_PATH}/${videoId}.audio`;
+    const audio = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
+      filter: 'audioonly',
+      quality: 'highestaudio',
+    }).pipe(fs.createWriteStream(videoPath));
 
     const downloadEnd = await new Promise(resolve => {
       audio.on('finish', () => resolve(true));
@@ -20,7 +23,7 @@ export default class YTDownload {
     });
 
     if (!downloadEnd) {
-      // oh no i can't download this shit 😵️
+      throw new Error(`Could not download audio for video ${videoId}`);
     }
 
     return this.extractMp3FromMp4(videoPath);
