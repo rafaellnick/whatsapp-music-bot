@@ -32,7 +32,8 @@ export default async function sendLocalMedia(
   );
 
   const sentMessage = await withTimeout(
-    chat.sendMessage(media, {
+    chat.sendMessage('', {
+      media,
       sendMediaAsDocument: options.asDocument,
       sendSeen: true,
     }),

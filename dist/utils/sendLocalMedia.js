@@ -28,7 +28,8 @@ function sendLocalMedia(message, media, options = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         const chat = yield message.getChat();
         console.log(`Queueing media upload: ${media.filename} (${options.asDocument ? 'document' : 'media'})`);
-        const sentMessage = yield withTimeout(chat.sendMessage(media, {
+        const sentMessage = yield withTimeout(chat.sendMessage('', {
+            media,
             sendMediaAsDocument: options.asDocument,
             sendSeen: true,
         }), `WhatsApp media send timed out after ${SEND_MEDIA_TIMEOUT_MS / 1000}s`);
