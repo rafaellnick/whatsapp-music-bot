@@ -16,6 +16,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "ts-node-dev --transpile-only --ignore-watch node_modules src/main.ts",
+    "install:deno": "sh scripts/install-deno.sh",
     "install:linux-deps": "sh scripts/install-linux-deps.sh",
     "install:ytdlp": "node scripts/install-yt-dlp.js",
     "reset:auth": "node scripts/reset-auth.js",

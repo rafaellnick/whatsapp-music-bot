@@ -71,8 +71,9 @@ function getYtDlpJsRuntime(): string {
   const nodeMajorVersion = Number(process.versions.node.split('.')[0]);
 
   if (nodeMajorVersion < 22) {
-    console.warn(
-      `yt-dlp may require Deno or Node 22+ for YouTube extraction. Current Node is ${process.version}.`,
+    throw new Error(
+      `No supported JavaScript runtime was found for yt-dlp. Current Node is ${process.version}; ` +
+        'run "npm run install:deno" or set DENO_PATH/YT_DLP_JS_RUNTIME.',
     );
   }
 

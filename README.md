@@ -81,6 +81,10 @@ $ nvm use
 # Install Chromium native dependencies on Debian/Ubuntu servers
 $ npm run install:linux-deps
 
+# Install local download tools used by YouTube extraction
+$ npm run install:ytdlp
+$ npm run install:deno
+
 # Install dependencies with npm
 $ npm ci
 
