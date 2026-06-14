@@ -9,7 +9,7 @@ const MIME_TYPES: Record<string, string> = {
 
 const DEFAULT_MAX_MEDIA_MB: Record<string, number> = {
   '.mp3': Number(process.env.WHATSAPP_MAX_AUDIO_MB || 20),
-  '.mp4': Number(process.env.WHATSAPP_MAX_VIDEO_MB || 64),
+  '.mp4': Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15),
 };
 
 export default function createLocalMedia(filePath: string): MessageMedia {

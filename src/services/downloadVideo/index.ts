@@ -4,7 +4,7 @@ import BaseDownload from './base';
 import YTDownload from './YTDownload';
 import { DOWNLOAD_PATH } from '../../config';
 
-const MAX_CACHED_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 64) * 1024 * 1024;
+const MAX_CACHED_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15) * 1024 * 1024;
 
 export default class Downloader extends BaseDownload {
   private ytDownload: YTDownload;

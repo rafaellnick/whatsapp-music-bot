@@ -12,7 +12,7 @@ const MIME_TYPES = {
 };
 const DEFAULT_MAX_MEDIA_MB = {
     '.mp3': Number(process.env.WHATSAPP_MAX_AUDIO_MB || 20),
-    '.mp4': Number(process.env.WHATSAPP_MAX_VIDEO_MB || 64),
+    '.mp4': Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15),
 };
 function createLocalMedia(filePath) {
     const buffer = fs_1.default.readFileSync(filePath);

@@ -17,7 +17,7 @@ const path_1 = __importDefault(require("path"));
 const base_1 = __importDefault(require("./base"));
 const YTDownload_1 = __importDefault(require("./YTDownload"));
 const config_1 = require("../../config");
-const MAX_CACHED_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 64) * 1024 * 1024;
+const MAX_CACHED_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15) * 1024 * 1024;
 class Downloader extends base_1.default {
     constructor() {
         super();
