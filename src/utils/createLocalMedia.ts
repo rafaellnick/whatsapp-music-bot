@@ -7,9 +7,10 @@ const MIME_TYPES: Record<string, string> = {
   '.mp4': 'video/mp4',
 };
 
+const MAX_VIDEO_MEDIA_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
 const DEFAULT_MAX_MEDIA_MB: Record<string, number> = {
   '.mp3': Number(process.env.WHATSAPP_MAX_AUDIO_MB || 20),
-  '.mp4': Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15),
+  '.mp4': MAX_VIDEO_MEDIA_MB,
 };
 
 export default function createLocalMedia(filePath: string): MessageMedia {
@@ -17,7 +18,7 @@ export default function createLocalMedia(filePath: string): MessageMedia {
   const extension = path.extname(filePath).toLowerCase();
   const mimetype = MIME_TYPES[extension] || 'application/octet-stream';
   const filename = path.basename(filePath);
-  const data = buffer.toString('base64').replace(/[^A-Za-z0-9+/=]/g, '');
+  const data = buffer.toString('base64');
   const maxMediaBytes =
     (DEFAULT_MAX_MEDIA_MB[extension] || Number(process.env.WHATSAPP_MAX_MEDIA_MB || 20)) *
     1024 *
@@ -35,6 +36,10 @@ export default function createLocalMedia(filePath: string): MessageMedia {
 
   if (!data || data.length % 4 !== 0) {
     throw new Error(`Could not encode media file ${filename} as valid base64`);
+  }
+
+  if (!/^[A-Za-z0-9+/=]+$/.test(data)) {
+    throw new Error(`Could not encode media file ${filename} with Latin1-safe base64`);
   }
 
   console.log(

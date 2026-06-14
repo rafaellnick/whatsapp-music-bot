@@ -7,7 +7,8 @@ import { DOWNLOAD_PATH } from '../../config';
 import { getYtDlpRuntimeArgs, runYtDlp } from '../download/YTDlp';
 
 const execFileAsync = promisify(execFile);
-const MAX_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15) * 1024 * 1024;
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
 const TARGET_VIDEO_BYTES = Math.floor(MAX_VIDEO_BYTES * 0.9);
 const SOURCE_FILE_MARKER = '.source.';
 
@@ -76,7 +77,7 @@ export default class YTDownload {
     const videoBitrateKbps = Math.max(64, totalBitrateKbps - audioBitrateKbps);
 
     console.log(
-      `Compressing video for WhatsApp media: ${videoBitrateKbps}k video, ${audioBitrateKbps}k audio`,
+      `Compressing video for WhatsApp media (${MAX_VIDEO_MB} MB max): ${videoBitrateKbps}k video, ${audioBitrateKbps}k audio`,
     );
 
     await this.runFfmpeg([

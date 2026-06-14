@@ -20,7 +20,8 @@ const ffmpeg_static_1 = __importDefault(require("ffmpeg-static"));
 const config_1 = require("../../config");
 const YTDlp_1 = require("../download/YTDlp");
 const execFileAsync = (0, util_1.promisify)(child_process_1.execFile);
-const MAX_VIDEO_BYTES = Number(process.env.WHATSAPP_MAX_VIDEO_MB || 15) * 1024 * 1024;
+const MAX_VIDEO_MB = Math.min(Number(process.env.WHATSAPP_MAX_VIDEO_MB || 8), 12);
+const MAX_VIDEO_BYTES = MAX_VIDEO_MB * 1024 * 1024;
 const TARGET_VIDEO_BYTES = Math.floor(MAX_VIDEO_BYTES * 0.9);
 const SOURCE_FILE_MARKER = '.source.';
 class YTDownload {
@@ -72,7 +73,7 @@ class YTDownload {
             const totalBitrateKbps = Math.max(96, Math.floor((TARGET_VIDEO_BYTES * 8) / durationSeconds / 1000));
             const audioBitrateKbps = durationSeconds > 600 ? 32 : 48;
             const videoBitrateKbps = Math.max(64, totalBitrateKbps - audioBitrateKbps);
-            console.log(`Compressing video for WhatsApp media: ${videoBitrateKbps}k video, ${audioBitrateKbps}k audio`);
+            console.log(`Compressing video for WhatsApp media (${MAX_VIDEO_MB} MB max): ${videoBitrateKbps}k video, ${audioBitrateKbps}k audio`);
             yield this.runFfmpeg([
                 '-y',
                 '-i',
