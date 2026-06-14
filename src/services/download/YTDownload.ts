@@ -1,9 +1,10 @@
-import ytdl from '@distube/ytdl-core';
 import { execFile } from 'child_process';
 import fs from 'fs';
+import path from 'path';
 import { promisify } from 'util';
 import ffmpegPath from 'ffmpeg-static';
 import { DOWNLOAD_PATH } from '../../config';
+import { getYtDlpRuntimeArgs, runYtDlp } from './YTDlp';
 
 const execFileAsync = promisify(execFile);
 
@@ -11,18 +12,23 @@ export default class YTDownload {
   public async download(videoId: string): Promise<string> {
     fs.mkdirSync(DOWNLOAD_PATH, { recursive: true });
 
-    const videoPath = `${DOWNLOAD_PATH}/${videoId}.audio`;
-    const audio = ytdl(`https://www.youtube.com/watch?v=${videoId}`, {
-      filter: 'audioonly',
-      quality: 'highestaudio',
-    }).pipe(fs.createWriteStream(videoPath));
+    const videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const videoPath = path.join(DOWNLOAD_PATH, `${videoId}.audio`);
+    fs.rmSync(videoPath, { force: true });
 
-    const downloadEnd = await new Promise(resolve => {
-      audio.on('finish', () => resolve(true));
-      audio.on('error', () => resolve(false));
-    });
+    await runYtDlp([
+      '--no-playlist',
+      '--force-overwrites',
+      '--no-part',
+      '--format',
+      'bestaudio/best',
+      '--output',
+      videoPath,
+      ...getYtDlpRuntimeArgs(),
+      videoUrl,
+    ]);
 
-    if (!downloadEnd) {
+    if (!fs.existsSync(videoPath) || fs.statSync(videoPath).size === 0) {
       throw new Error(`Could not download audio for video ${videoId}`);
     }
 
@@ -30,8 +36,10 @@ export default class YTDownload {
   }
 
   private async extractMp3FromMp4(videoPath: string): Promise<string> {
-    const audioPath = videoPath.split('.')[0];
-    const outputPath = `${audioPath}.mp3`;
+    const outputPath = path.join(
+      path.dirname(videoPath),
+      `${path.parse(videoPath).name}.mp3`,
+    );
 
     if (!ffmpegPath) {
       throw new Error('ffmpeg-static binary was not found');
