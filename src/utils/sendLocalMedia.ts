@@ -22,7 +22,7 @@ type SendLocalMediaOptions = {
 type MessageWithPuppeteerClient = Message & {
   client?: {
     pupPage?: {
-      evaluate: <T>(pageFunction: () => T | Promise<T>) => Promise<T>;
+      evaluate: <T>(pageFunction: () => T) => Promise<T>;
     };
   };
 };
@@ -39,6 +39,10 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMessage: string): Prom
   } finally {
     clearTimeout(timeout!);
   }
+}
+
+function sleep(delayMs: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, delayMs));
 }
 
 export default async function sendLocalMedia(
@@ -116,8 +120,8 @@ async function patchWhatsappMediaDecoder(message: Message): Promise<void> {
   if (!page) return;
 
   try {
-    const patched = await page.evaluate(async () => {
-      const installPatch = (): boolean => {
+    for (let attempt = 0; attempt < 40; attempt += 1) {
+      const patched = await page.evaluate(() => {
         const webJs = (window as any).WWebJS;
 
         if (!webJs) return false;
@@ -164,20 +168,14 @@ async function patchWhatsappMediaDecoder(message: Message): Promise<void> {
 
         webJs.__safeMediaInfoToFilePatch = true;
         return true;
-      };
+      });
 
-      for (let attempt = 0; attempt < 40; attempt += 1) {
-        if (installPatch()) return true;
+      if (patched) return;
 
-        await new Promise(resolve => window.setTimeout(resolve, 250));
-      }
-
-      return false;
-    });
-
-    if (!patched) {
-      console.log('WhatsApp media decoder was not available before sending media.');
+      await sleep(250);
     }
+
+    console.log('WhatsApp media decoder was not available before sending media.');
   } catch (error) {
     console.log('Could not patch WhatsApp media decoder:', error);
   }

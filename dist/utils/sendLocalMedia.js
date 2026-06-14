@@ -39,6 +39,9 @@ function withTimeout(promise, timeoutMessage) {
         }
     });
 }
+function sleep(delayMs) {
+    return new Promise(resolve => setTimeout(resolve, delayMs));
+}
 function sendLocalMedia(message, filePath, options = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         const { filename, maxMediaBytes, mimetype, size } = getMediaInfo(filePath);
@@ -86,8 +89,8 @@ function patchWhatsappMediaDecoder(message) {
         if (!page)
             return;
         try {
-            const patched = yield page.evaluate(() => __awaiter(this, void 0, void 0, function* () {
-                const installPatch = () => {
+            for (let attempt = 0; attempt < 40; attempt += 1) {
+                const patched = yield page.evaluate(() => {
                     const webJs = window.WWebJS;
                     if (!webJs)
                         return false;
@@ -123,17 +126,12 @@ function patchWhatsappMediaDecoder(message) {
                     };
                     webJs.__safeMediaInfoToFilePatch = true;
                     return true;
-                };
-                for (let attempt = 0; attempt < 40; attempt += 1) {
-                    if (installPatch())
-                        return true;
-                    yield new Promise(resolve => window.setTimeout(resolve, 250));
-                }
-                return false;
-            }));
-            if (!patched) {
-                console.log('WhatsApp media decoder was not available before sending media.');
+                });
+                if (patched)
+                    return;
+                yield sleep(250);
             }
+            console.log('WhatsApp media decoder was not available before sending media.');
         }
         catch (error) {
             console.log('Could not patch WhatsApp media decoder:', error);
