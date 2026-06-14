@@ -1,0 +1,26 @@
+services:
+  whatsapp-music-bot:
+    build:
+      context: .
+    image: whatsapp-music-bot:latest
+    container_name: whatsapp-music-bot
+    restart: unless-stopped
+    init: true
+    shm_size: 1gb
+    environment:
+      NODE_ENV: production
+      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
+      WWEBJS_AUTH_PATH: /app/.wwebjs_auth
+      WWEBJS_CACHE_PATH: /app/.wwebjs_cache
+      WWEBJS_BOT_LOCK: /tmp/wwebjs_bot.lock
+      YT_DLP_PATH: /app/bin/yt-dlp
+      DENO_PATH: /app/bin/deno
+      WHATSAPP_MAX_VIDEO_MB: ${WHATSAPP_MAX_VIDEO_MB:-5}
+    volumes:
+      - whatsapp_auth:/app/.wwebjs_auth
+      - whatsapp_cache:/app/.wwebjs_cache
+    stop_grace_period: 30s
+
+volumes:
+  whatsapp_auth:
+  whatsapp_cache:

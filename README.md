@@ -111,6 +111,18 @@ $ npm run reset:auth
 $ npm start
 ```
 
+### Docker
+
+To run the bot in a container and restart it automatically after server reboots:
+
+```bash
+$ sudo systemctl enable --now docker
+$ docker compose up -d --build
+$ docker logs -f whatsapp-music-bot
+```
+
+The first run prints a WhatsApp QR code in the container logs. The Compose file persists `.wwebjs_auth` and `.wwebjs_cache` in Docker volumes, so the WhatsApp session survives container restarts.
+
 <br />
 See available langs in `src/language.ts`. Configure your language in `config.ts` file:
 
