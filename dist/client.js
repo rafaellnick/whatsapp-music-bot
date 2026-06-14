@@ -72,7 +72,7 @@ const createClient = () => {
     removeStaleChromiumLocks(authPath);
     const client = new whatsapp_web_js_1.Client({
         authTimeoutMs: 120000,
-        qrMaxRetries: 5,
+        qrMaxRetries: 0,
         takeoverOnConflict: true,
         takeoverTimeoutMs: 0,
         webVersionCache: {

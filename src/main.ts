@@ -60,9 +60,20 @@ const clearDownloadsOnStartup = (): void => {
   console.log(`Cleared downloads folder on startup (${entries.length} item(s) removed).`);
 };
 
-const isExecutionContextDestroyed = (error: unknown): boolean =>
-  String(error).includes('Execution context was destroyed') ||
-  String((error as Error)?.message).includes('Execution context was destroyed');
+const transientBrowserErrorMessages = [
+  'Execution context was destroyed',
+  'Protocol error',
+  'Session closed',
+  'Target closed',
+  'Target page, context or browser has been closed',
+  'Most likely the page has been closed',
+  'Navigation failed because browser has disconnected',
+];
+
+const isTransientBrowserError = (error: unknown): boolean => {
+  const message = `${String(error)} ${String((error as Error)?.message || '')}`;
+  return transientBrowserErrorMessages.some(fragment => message.includes(fragment));
+};
 
 const destroyClient = async (): Promise<void> => {
   try {
@@ -91,6 +102,9 @@ const initializeClient = async (): Promise<void> => {
   while (true) {
     client = createClient();
     bindMessageHandler(client);
+    client.on('disconnected', reason => {
+      scheduleClientRestart(reason);
+    });
 
     try {
       await client.initialize();
@@ -99,7 +113,7 @@ const initializeClient = async (): Promise<void> => {
       console.error(`WhatsApp initialize failed on attempt ${attempt}:`, error);
       await destroyClient();
 
-      const delay = isExecutionContextDestroyed(error)
+      const delay = isTransientBrowserError(error)
         ? restartDelayMs
         : Math.min(restartDelayMs * attempt, 60000);
 
@@ -126,7 +140,7 @@ const scheduleClientRestart = (reason: unknown): void => {
 };
 
 process.on('unhandledRejection', reason => {
-  if (isExecutionContextDestroyed(reason)) {
+  if (isTransientBrowserError(reason)) {
     scheduleClientRestart(reason);
     return;
   }
@@ -135,7 +149,7 @@ process.on('unhandledRejection', reason => {
 });
 
 process.on('uncaughtException', error => {
-  if (isExecutionContextDestroyed(error)) {
+  if (isTransientBrowserError(error)) {
     scheduleClientRestart(error);
     return;
   }

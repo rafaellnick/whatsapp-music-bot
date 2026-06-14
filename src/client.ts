@@ -68,7 +68,7 @@ export const createClient = (): Client => {
 
   const client = new Client({
     authTimeoutMs: 120000,
-    qrMaxRetries: 5,
+    qrMaxRetries: 0,
     takeoverOnConflict: true,
     takeoverTimeoutMs: 0,
     webVersionCache: {

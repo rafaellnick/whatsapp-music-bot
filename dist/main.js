@@ -58,8 +58,19 @@ const clearDownloadsOnStartup = () => {
     }
     console.log(`Cleared downloads folder on startup (${entries.length} item(s) removed).`);
 };
-const isExecutionContextDestroyed = (error) => String(error).includes('Execution context was destroyed') ||
-    String(error === null || error === void 0 ? void 0 : error.message).includes('Execution context was destroyed');
+const transientBrowserErrorMessages = [
+    'Execution context was destroyed',
+    'Protocol error',
+    'Session closed',
+    'Target closed',
+    'Target page, context or browser has been closed',
+    'Most likely the page has been closed',
+    'Navigation failed because browser has disconnected',
+];
+const isTransientBrowserError = (error) => {
+    const message = `${String(error)} ${String((error === null || error === void 0 ? void 0 : error.message) || '')}`;
+    return transientBrowserErrorMessages.some(fragment => message.includes(fragment));
+};
 const destroyClient = () => __awaiter(void 0, void 0, void 0, function* () {
     try {
         yield client.destroy();
@@ -84,6 +95,9 @@ const initializeClient = () => __awaiter(void 0, void 0, void 0, function* () {
     while (true) {
         client = (0, client_1.createClient)();
         bindMessageHandler(client);
+        client.on('disconnected', reason => {
+            scheduleClientRestart(reason);
+        });
         try {
             yield client.initialize();
             return;
@@ -91,7 +105,7 @@ const initializeClient = () => __awaiter(void 0, void 0, void 0, function* () {
         catch (error) {
             console.error(`WhatsApp initialize failed on attempt ${attempt}:`, error);
             yield destroyClient();
-            const delay = isExecutionContextDestroyed(error)
+            const delay = isTransientBrowserError(error)
                 ? restartDelayMs
                 : Math.min(restartDelayMs * attempt, 60000);
             console.error(`Retrying WhatsApp initialization in ${delay / 1000}s...`);
@@ -114,14 +128,14 @@ const scheduleClientRestart = (reason) => {
     }), restartDelayMs);
 };
 process.on('unhandledRejection', reason => {
-    if (isExecutionContextDestroyed(reason)) {
+    if (isTransientBrowserError(reason)) {
         scheduleClientRestart(reason);
         return;
     }
     console.error('Unhandled rejection:', reason);
 });
 process.on('uncaughtException', error => {
-    if (isExecutionContextDestroyed(error)) {
+    if (isTransientBrowserError(error)) {
         scheduleClientRestart(error);
         return;
     }
