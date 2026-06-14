@@ -17,6 +17,7 @@ const search_1 = __importDefault(require("../services/search"));
 const language_1 = __importDefault(require("../language"));
 const config_1 = require("../config");
 const createLocalMedia_1 = __importDefault(require("../utils/createLocalMedia"));
+const sendLocalMedia_1 = __importDefault(require("../utils/sendLocalMedia"));
 exports.default = {
     run: (message, keyword) => __awaiter(void 0, void 0, void 0, function* () {
         const downloader = new download_1.default();
@@ -27,7 +28,7 @@ exports.default = {
             message.reply(language_1.default[config_1.LANGUAGE].DOWNLOAD_STARTED);
             const music = yield downloader.handle(videoId);
             const media = (0, createLocalMedia_1.default)(music);
-            return message.reply(media);
+            return (0, sendLocalMedia_1.default)(message, media);
         }
         catch (error) {
             console.log(error);

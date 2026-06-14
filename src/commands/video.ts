@@ -4,6 +4,7 @@ import Searcher from '../services/search';
 import text from '../language';
 import { LANGUAGE } from '../config';
 import createLocalMedia from '../utils/createLocalMedia';
+import sendLocalMedia from '../utils/sendLocalMedia';
 
 export default {
   run: async (message: Message, keyword: string): Promise<Message> => {
@@ -18,7 +19,7 @@ export default {
       const music = await downloader.handle(videoId);
 
       const media = createLocalMedia(music);
-      return message.reply(media);
+      return sendLocalMedia(message, media);
     } catch (error) {
       console.log(error);
       return message.reply(text[LANGUAGE].ERROR);
