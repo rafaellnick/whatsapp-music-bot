@@ -12,11 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const whatsapp_web_js_1 = require("whatsapp-web.js");
 const downloadVideo_1 = __importDefault(require("../services/downloadVideo"));
 const search_1 = __importDefault(require("../services/search"));
 const language_1 = __importDefault(require("../language"));
 const config_1 = require("../config");
+const createLocalMedia_1 = __importDefault(require("../utils/createLocalMedia"));
 exports.default = {
     run: (message, keyword) => __awaiter(void 0, void 0, void 0, function* () {
         const downloader = new downloadVideo_1.default();
@@ -26,7 +26,7 @@ exports.default = {
             message.reply(`${language_1.default[config_1.LANGUAGE].FOUNDED} "${title}"`);
             message.reply(language_1.default[config_1.LANGUAGE].DOWNLOAD_STARTED);
             const music = yield downloader.handle(videoId);
-            const media = whatsapp_web_js_1.MessageMedia.fromFilePath(music);
+            const media = (0, createLocalMedia_1.default)(music);
             return message.reply(media);
         }
         catch (error) {

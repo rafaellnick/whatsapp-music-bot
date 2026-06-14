@@ -1,8 +1,9 @@
-import { MessageMedia, Message } from 'whatsapp-web.js';
+import { Message } from 'whatsapp-web.js';
 import Downloader from '../services/download';
 import Searcher from '../services/search';
 import text from '../language';
 import { LANGUAGE } from '../config';
+import createLocalMedia from '../utils/createLocalMedia';
 
 export default {
   run: async (message: Message, keyword: string): Promise<Message> => {
@@ -16,7 +17,7 @@ export default {
 
       const music = await downloader.handle(videoId);
 
-      const media = MessageMedia.fromFilePath(music);
+      const media = createLocalMedia(music);
       return message.reply(media);
     } catch (error) {
       console.log(error);

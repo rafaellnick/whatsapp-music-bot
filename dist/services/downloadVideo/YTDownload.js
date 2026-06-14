@@ -32,7 +32,7 @@ class YTDownload {
                 '--force-overwrites',
                 '--no-part',
                 '--format',
-                'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'bestvideo[ext=mp4][height<=360]+bestaudio[ext=m4a]/best[ext=mp4][height<=360]/best[height<=360]/best',
                 '--merge-output-format',
                 'mp4',
                 '--ffmpeg-location',
