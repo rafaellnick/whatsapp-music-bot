@@ -18,6 +18,7 @@ const client_1 = require("./client");
 const commands_1 = __importDefault(require("./commands"));
 const config_1 = require("./config");
 const lockPath = (0, path_1.resolve)(process.env.WWEBJS_BOT_LOCK || '.wwebjs_bot.lock');
+const downloadsPath = (0, path_1.resolve)(config_1.DOWNLOAD_PATH);
 const restartDelayMs = Number(process.env.WWEBJS_RESTART_DELAY_MS || 5000);
 let client;
 let restarting = false;
@@ -48,6 +49,14 @@ const releaseProcessLock = () => {
     if (existingPid === process.pid) {
         (0, fs_1.rmSync)(lockPath, { force: true });
     }
+};
+const clearDownloadsOnStartup = () => {
+    (0, fs_1.mkdirSync)(downloadsPath, { recursive: true });
+    const entries = (0, fs_1.readdirSync)(downloadsPath);
+    for (const entry of entries) {
+        (0, fs_1.rmSync)((0, path_1.join)(downloadsPath, entry), { recursive: true, force: true });
+    }
+    console.log(`Cleared downloads folder on startup (${entries.length} item(s) removed).`);
 };
 const isExecutionContextDestroyed = (error) => String(error).includes('Execution context was destroyed') ||
     String(error === null || error === void 0 ? void 0 : error.message).includes('Execution context was destroyed');
@@ -130,6 +139,7 @@ process.on('SIGTERM', () => {
     process.exit(0);
 });
 acquireProcessLock();
+clearDownloadsOnStartup();
 initializeClient().catch(error => {
     console.error(error);
     releaseProcessLock();

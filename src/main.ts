@@ -1,11 +1,12 @@
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'fs';
-import { resolve } from 'path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'fs';
+import { join, resolve } from 'path';
 import { Client } from 'whatsapp-web.js';
 import { createClient } from './client';
 import commands from './commands';
-import { PREFIX } from './config';
+import { DOWNLOAD_PATH, PREFIX } from './config';
 
 const lockPath = resolve(process.env.WWEBJS_BOT_LOCK || '.wwebjs_bot.lock');
+const downloadsPath = resolve(DOWNLOAD_PATH);
 const restartDelayMs = Number(process.env.WWEBJS_RESTART_DELAY_MS || 5000);
 let client: Client;
 let restarting = false;
@@ -45,6 +46,18 @@ const releaseProcessLock = (): void => {
   if (existingPid === process.pid) {
     rmSync(lockPath, { force: true });
   }
+};
+
+const clearDownloadsOnStartup = (): void => {
+  mkdirSync(downloadsPath, { recursive: true });
+
+  const entries = readdirSync(downloadsPath);
+
+  for (const entry of entries) {
+    rmSync(join(downloadsPath, entry), { recursive: true, force: true });
+  }
+
+  console.log(`Cleared downloads folder on startup (${entries.length} item(s) removed).`);
 };
 
 const isExecutionContextDestroyed = (error: unknown): boolean =>
@@ -143,6 +156,7 @@ process.on('SIGTERM', () => {
 });
 
 acquireProcessLock();
+clearDownloadsOnStartup();
 initializeClient().catch(error => {
   console.error(error);
   releaseProcessLock();
