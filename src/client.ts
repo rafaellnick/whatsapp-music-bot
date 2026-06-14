@@ -2,6 +2,7 @@ import { Client, LocalAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { existsSync, readdirSync, rmSync, statSync } from 'fs';
 import { join, resolve } from 'path';
+import puppeteer from 'puppeteer';
 
 import text from './language';
 import { LANGUAGE } from './config';
@@ -16,9 +17,18 @@ const getExecutablePath = (): string | undefined => {
     '/usr/bin/google-chrome',
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
+    getPuppeteerExecutablePath(),
   ].filter(Boolean) as string[];
 
   return candidates.find(candidate => existsSync(candidate));
+};
+
+const getPuppeteerExecutablePath = (): string | undefined => {
+  try {
+    return puppeteer.executablePath();
+  } catch {
+    return undefined;
+  }
 };
 
 const executablePath = getExecutablePath();

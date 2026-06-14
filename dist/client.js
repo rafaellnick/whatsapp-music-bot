@@ -17,6 +17,7 @@ const whatsapp_web_js_1 = require("whatsapp-web.js");
 const qrcode_terminal_1 = __importDefault(require("qrcode-terminal"));
 const fs_1 = require("fs");
 const path_1 = require("path");
+const puppeteer_1 = __importDefault(require("puppeteer"));
 const language_1 = __importDefault(require("./language"));
 const config_1 = require("./config");
 const getExecutablePath = () => {
@@ -29,8 +30,17 @@ const getExecutablePath = () => {
         '/usr/bin/google-chrome',
         '/usr/bin/chromium',
         '/usr/bin/chromium-browser',
+        getPuppeteerExecutablePath(),
     ].filter(Boolean);
     return candidates.find(candidate => (0, fs_1.existsSync)(candidate));
+};
+const getPuppeteerExecutablePath = () => {
+    try {
+        return puppeteer_1.default.executablePath();
+    }
+    catch (_a) {
+        return undefined;
+    }
 };
 const executablePath = getExecutablePath();
 console.log(executablePath

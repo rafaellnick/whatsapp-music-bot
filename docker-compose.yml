@@ -9,12 +9,10 @@ services:
     shm_size: 1gb
     environment:
       NODE_ENV: production
-      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
       WWEBJS_AUTH_PATH: /app/.wwebjs_auth
       WWEBJS_CACHE_PATH: /app/.wwebjs_cache
       WWEBJS_BOT_LOCK: /tmp/wwebjs_bot.lock
       YT_DLP_PATH: /app/bin/yt-dlp
-      DENO_PATH: /app/bin/deno
       WHATSAPP_MAX_VIDEO_MB: ${WHATSAPP_MAX_VIDEO_MB:-5}
     volumes:
       - whatsapp_auth:/app/.wwebjs_auth

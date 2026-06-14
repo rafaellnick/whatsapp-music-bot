@@ -1,25 +1,18 @@
-FROM node:20-bookworm-slim
+FROM ghcr.io/puppeteer/puppeteer:24.38.0
 
 ENV NODE_ENV=production \
+    NPM_CONFIG_ENGINE_STRICT=false \
     PUPPETEER_SKIP_DOWNLOAD=true \
     PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium \
+    PUPPETEER_CACHE_DIR=/home/pptruser/.cache/puppeteer \
     YT_DLP_PATH=/app/bin/yt-dlp \
-    DENO_PATH=/app/bin/deno \
     WWEBJS_AUTH_PATH=/app/.wwebjs_auth \
     WWEBJS_CACHE_PATH=/app/.wwebjs_cache \
     WWEBJS_BOT_LOCK=/tmp/wwebjs_bot.lock
 
-WORKDIR /app
+USER root
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    chromium \
-    curl \
-    fonts-liberation \
-    unzip \
-  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
 COPY package.json package-lock.json ./
 
@@ -29,8 +22,10 @@ COPY . .
 
 RUN npm run build \
   && npm run install:ytdlp \
-  && npm run install:deno \
   && npm prune --omit=dev \
-  && mkdir -p downloads .wwebjs_auth .wwebjs_cache
+  && mkdir -p downloads .wwebjs_auth .wwebjs_cache \
+  && chown -R pptruser:pptruser /app
+
+USER pptruser
 
 CMD ["npm", "start"]
