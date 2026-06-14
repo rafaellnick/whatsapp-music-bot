@@ -3,7 +3,6 @@ import Downloader from '../services/download';
 import Searcher from '../services/search';
 import text from '../language';
 import { LANGUAGE } from '../config';
-import createLocalMedia from '../utils/createLocalMedia';
 import sendLocalMedia from '../utils/sendLocalMedia';
 
 export default {
@@ -18,8 +17,7 @@ export default {
 
       const music = await downloader.handle(videoId);
 
-      const media = createLocalMedia(music);
-      return await sendLocalMedia(message, media);
+      return await sendLocalMedia(message, music);
     } catch (error) {
       console.log(error);
       return message.reply(text[LANGUAGE].ERROR);
