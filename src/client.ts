@@ -2,7 +2,6 @@ import { Client, LocalAuth } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { existsSync, readdirSync, rmSync, statSync } from 'fs';
 import { join, resolve } from 'path';
-import puppeteer from 'puppeteer';
 
 import text from './language';
 import { LANGUAGE } from './config';
@@ -17,26 +16,20 @@ const getExecutablePath = (): string | undefined => {
     '/usr/bin/google-chrome',
     '/usr/bin/chromium',
     '/usr/bin/chromium-browser',
-    getPuppeteerExecutablePath(),
   ].filter(Boolean) as string[];
 
   return candidates.find(candidate => existsSync(candidate));
 };
 
-const getPuppeteerExecutablePath = (): string | undefined => {
-  try {
-    return puppeteer.executablePath();
-  } catch {
-    return undefined;
-  }
-};
-
 const executablePath = getExecutablePath();
-console.log(
-  executablePath
-    ? `Using browser executable: ${executablePath}`
-    : 'Using Puppeteer bundled browser',
-);
+
+if (!executablePath) {
+  throw new Error(
+    'Chrome/Chromium executable was not found. Install Chromium/Chrome or set PUPPETEER_EXECUTABLE_PATH.',
+  );
+}
+
+console.log(`Using browser executable: ${executablePath}`);
 
 const authPath = resolve(process.env.WWEBJS_AUTH_PATH || '.wwebjs_auth');
 const cachePath = resolve(process.env.WWEBJS_CACHE_PATH || '.wwebjs_cache');
@@ -77,7 +70,7 @@ export const createClient = (): Client => {
       strict: false,
     },
     puppeteer: {
-      ...(executablePath ? { executablePath } : {}),
+      executablePath,
       headless: true,
       args: [
         '--no-sandbox',

@@ -17,7 +17,6 @@ const whatsapp_web_js_1 = require("whatsapp-web.js");
 const qrcode_terminal_1 = __importDefault(require("qrcode-terminal"));
 const fs_1 = require("fs");
 const path_1 = require("path");
-const puppeteer_1 = __importDefault(require("puppeteer"));
 const language_1 = __importDefault(require("./language"));
 const config_1 = require("./config");
 const getExecutablePath = () => {
@@ -30,22 +29,14 @@ const getExecutablePath = () => {
         '/usr/bin/google-chrome',
         '/usr/bin/chromium',
         '/usr/bin/chromium-browser',
-        getPuppeteerExecutablePath(),
     ].filter(Boolean);
     return candidates.find(candidate => (0, fs_1.existsSync)(candidate));
 };
-const getPuppeteerExecutablePath = () => {
-    try {
-        return puppeteer_1.default.executablePath();
-    }
-    catch (_a) {
-        return undefined;
-    }
-};
 const executablePath = getExecutablePath();
-console.log(executablePath
-    ? `Using browser executable: ${executablePath}`
-    : 'Using Puppeteer bundled browser');
+if (!executablePath) {
+    throw new Error('Chrome/Chromium executable was not found. Install Chromium/Chrome or set PUPPETEER_EXECUTABLE_PATH.');
+}
+console.log(`Using browser executable: ${executablePath}`);
 const authPath = (0, path_1.resolve)(process.env.WWEBJS_AUTH_PATH || '.wwebjs_auth');
 const cachePath = (0, path_1.resolve)(process.env.WWEBJS_CACHE_PATH || '.wwebjs_cache');
 const removeStaleChromiumLocks = (root) => {
@@ -80,7 +71,10 @@ const createClient = () => {
             path: cachePath,
             strict: false,
         },
-        puppeteer: Object.assign(Object.assign({}, (executablePath ? { executablePath } : {})), { headless: true, args: [
+        puppeteer: {
+            executablePath,
+            headless: true,
+            args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
@@ -93,7 +87,8 @@ const createClient = () => {
                 '--no-first-run',
                 '--no-zygote',
                 '--mute-audio',
-            ] }),
+            ],
+        },
         authStrategy: new whatsapp_web_js_1.LocalAuth({
             dataPath: authPath,
             rmMaxRetries: 10,
