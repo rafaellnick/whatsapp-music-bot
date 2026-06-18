@@ -23,6 +23,9 @@ const restartDelayMs = Number(process.env.WWEBJS_RESTART_DELAY_MS || 5000);
 let client;
 let restarting = false;
 const sleep = (delay) => new Promise(resolve => setTimeout(resolve, delay));
+setInterval(() => {
+    // Keeps the Node process alive while Puppeteer is waiting for QR authentication.
+}, 60 * 1000);
 const isProcessRunning = (pid) => {
     try {
         process.kill(pid, 0);
@@ -90,11 +93,54 @@ const bindMessageHandler = (currentClient) => {
         yield commands_1.default[command].run(message, content);
     }));
 };
+const watchPuppeteerProcess = (currentClient) => {
+    const startedAt = Date.now();
+    const watchTimeoutMs = 30000;
+    const interval = setInterval(() => {
+        var _a;
+        if (currentClient !== client) {
+            clearInterval(interval);
+            return;
+        }
+        const puppeteerClient = currentClient;
+        const browser = puppeteerClient.pupBrowser;
+        const page = puppeteerClient.pupPage;
+        if (!browser && Date.now() - startedAt < watchTimeoutMs)
+            return;
+        clearInterval(interval);
+        if (!browser) {
+            console.error('Puppeteer browser was not created within watcher timeout.');
+            return;
+        }
+        browser.on('disconnected', () => {
+            scheduleClientRestart('Puppeteer browser disconnected');
+        });
+        const browserProcess = (_a = browser.process) === null || _a === void 0 ? void 0 : _a.call(browser);
+        if (browserProcess) {
+            browserProcess.once('exit', (code, signal) => {
+                console.error(`Puppeteer browser process exited. code=${code} signal=${signal}`);
+                scheduleClientRestart(`Puppeteer browser exited with code=${code} signal=${signal}`);
+            });
+        }
+        page === null || page === void 0 ? void 0 : page.on('close', () => {
+            scheduleClientRestart('Puppeteer page closed');
+        });
+        page === null || page === void 0 ? void 0 : page.on('error', error => {
+            console.error('Puppeteer page error:', error);
+            scheduleClientRestart(error || 'Puppeteer page error');
+        });
+        page === null || page === void 0 ? void 0 : page.on('pageerror', error => {
+            console.error('Puppeteer page runtime error:', error);
+        });
+        console.log('Puppeteer browser watcher attached.');
+    }, 250);
+};
 const initializeClient = () => __awaiter(void 0, void 0, void 0, function* () {
     let attempt = 1;
     while (true) {
         client = (0, client_1.createClient)();
         bindMessageHandler(client);
+        watchPuppeteerProcess(client);
         client.on('disconnected', reason => {
             scheduleClientRestart(reason);
         });
@@ -143,7 +189,16 @@ process.on('uncaughtException', error => {
     releaseProcessLock();
     process.exit(1);
 });
-process.on('exit', releaseProcessLock);
+process.on('warning', warning => {
+    console.warn('Process warning:', warning);
+});
+process.on('beforeExit', code => {
+    console.error(`Node process beforeExit with code ${code}.`);
+});
+process.on('exit', code => {
+    console.error(`Node process exit with code ${code}.`);
+    releaseProcessLock();
+});
 process.on('SIGINT', () => {
     releaseProcessLock();
     process.exit(0);
